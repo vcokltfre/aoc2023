@@ -1,0 +1,171 @@
+goto prog_start
+
+~find_num
+
+line = @stack:pop
+line_idx = @stack:pop
+line_len = @array:len line
+remaining = line_len - line_idx
+
+# one, two, six
+goto cant_be_num if remaining < 3
+val1 = @array:get line line_idx
+val2addr = line_idx + 1
+val2 = @array:get line val2addr
+val3addr = line_idx + 2
+val3 = @array:get line val3addr
+vals = @array:new val1 val2 val3
+raw = @string:join vals ""
+
+goto one if raw == "one"
+goto two if raw == "two"
+goto six if raw == "six"
+
+# four, five, nine
+goto cant_be_num if remaining < 4
+val1 = @array:get line line_idx
+val2addr = line_idx + 1
+val2 = @array:get line val2addr
+val3addr = line_idx + 2
+val3 = @array:get line val3addr
+val4addr = line_idx + 3
+val4 = @array:get line val4addr
+vals = @array:new val1 val2 val3 val4
+raw = @string:join vals ""
+
+goto four if raw == "four"
+goto five if raw == "five"
+goto nine if raw == "nine"
+
+# three, seven, eight
+goto cant_be_num if remaining < 5
+val1 = @array:get line line_idx
+val2addr = line_idx + 1
+val2 = @array:get line val2addr
+val3addr = line_idx + 2
+val3 = @array:get line val3addr
+val4addr = line_idx + 3
+val4 = @array:get line val4addr
+val5addr = line_idx + 4
+val5 = @array:get line val5addr
+vals = @array:new val1 val2 val3 val4 val5
+raw = @string:join vals ""
+
+goto three if raw == "three"
+goto seven if raw == "seven"
+goto eight if raw == "eight"
+
+goto cant_be_num
+
+~one
+@stack:push "1"
+goto find_num_done
+
+~two
+@stack:push "2"
+goto find_num_done
+
+~three
+@stack:push "3"
+goto find_num_done
+
+~four
+@stack:push "4"
+goto find_num_done
+
+~five
+@stack:push "5"
+goto find_num_done
+
+~six
+@stack:push "6"
+goto find_num_done
+
+~seven
+@stack:push "7"
+goto find_num_done
+
+~eight
+@stack:push "8"
+goto find_num_done
+
+~nine
+@stack:push "9"
+goto find_num_done
+
+~cant_be_num
+@stack:push ""
+goto find_num_done
+
+~find_num_done
+
+ret
+
+~prog_start
+
+data = @file:read "days/01/input.txt"
+lines = @string:split data "\n"
+
+len = @array:len lines
+idx = 0
+
+nums = @array:new
+
+~loop
+goto done if idx >= len
+
+line = @array:get lines idx
+line = @string:toarray line
+line_len = @array:len line
+line_idx = 0
+
+arr = @array:new
+
+~line_loop
+goto line_done if line_idx >= line_len
+
+char = @array:get line line_idx
+
+isnum = @string:contains "1234567890" char
+goto line_maybe if isnum == false
+
+@array:push arr char
+
+~line_maybe
+can_be_num = @string:contains "otfsen" char
+goto line_skip if can_be_num == false
+
+@stack:push line_idx
+@stack:push line
+
+call find_num
+
+num = @stack:pop
+goto line_skip if num == ""
+
+@array:push arr num
+
+~line_skip
+
+line_idx = line_idx + 1
+goto line_loop
+~line_done
+
+first = @array:get arr 0
+last_idx = @array:len arr
+last_idx = last_idx - 1
+last = @array:get arr last_idx
+
+vals = @array:new first last
+raw = @string:join vals ""
+num = @convert:atoi raw
+
+@array:push nums num
+
+idx = idx + 1
+goto loop
+
+~done
+
+sum = @math:sum nums
+@io:println sum

@@ -1,0 +1,52 @@
+data = @file:read "days/01/input.txt"
+lines = @string:split data "\n"
+
+len = @array:len lines
+idx = 0
+
+nums = @array:new
+
+~loop
+goto done if idx >= len
+
+line = @array:get lines idx
+line = @string:toarray line
+line_len = @array:len line
+line_idx = 0
+
+arr = @array:new
+
+~line_loop
+goto line_done if line_idx >= line_len
+
+char = @array:get line line_idx
+
+isnum = @string:contains "1234567890" char
+goto line_skip if isnum == false
+
+@array:push arr char
+
+~line_skip
+
+line_idx = line_idx + 1
+goto line_loop
+~line_done
+
+first = @array:get arr 0
+last_idx = @array:len arr
+last_idx = last_idx - 1
+last = @array:get arr last_idx
+
+vals = @array:new first last
+raw = @string:join vals ""
+num = @convert:atoi raw
+
+@array:push nums num
+
+idx = idx + 1
+goto loop
+
+~done
+
+sum = @math:sum nums
+@io:println sum
