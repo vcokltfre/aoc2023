@@ -1,0 +1,126 @@
+goto prog_start
+
+~parse
+
+show = @stack:pop
+
+parse_red = 1
+parse_green = 1
+parse_blue = 1
+
+show_parts = @string:split show ", "
+show_parts_len = @array:len show_parts
+show_parts_idx = 0
+
+~parse_show_loop
+goto parse_show_done if show_parts_idx >= show_parts_len
+
+parse_part = @array:get show_parts show_parts_idx
+parse_parts = @string:split parse_part " "
+parse_parts_num = @array:get parse_parts 0
+parse_parts_num = @convert:atoi parse_parts_num
+parse_parts_col = @array:get parse_parts 1
+
+@vm:debug parse_parts_num parse_parts_col
+
+goto parse_show_red if parse_parts_col == "red"
+goto parse_show_green if parse_parts_col == "green"
+goto parse_show_blue if parse_parts_col == "blue"
+
+~parse_show_red
+parse_red = parse_parts_num
+goto parse_show_loop_skip
+
+~parse_show_green
+parse_green = parse_parts_num
+goto parse_show_loop_skip
+
+~parse_show_blue
+parse_blue = parse_parts_num
+goto parse_show_loop_skip
+
+~parse_show_loop_skip
+
+show_parts_idx = show_parts_idx + 1
+goto parse_show_loop
+
+~parse_show_done
+
+@stack:push parse_blue
+@stack:push parse_green
+@stack:push parse_red
+
+ret
+
+~prog_start
+
+data = @file:read "days/02/input.txt"
+lines = @string:split data "\n"
+
+len = @array:len lines
+idx = 0
+
+total = 0
+
+~loop
+goto done if idx >= len
+
+line = @array:get lines idx
+parts = @string:split line ":"
+
+game = @array:get parts 0
+game = @string:split game " "
+game = @array:get game 1
+game = @convert:atoi game
+
+cols = @array:get parts 1
+cols = @string:toarray cols
+@array:popat cols 0
+cols = @string:join cols ""
+
+shows = @string:split cols "; "
+shows_len = @array:len shows
+shows_idx = 0
+
+game_red = 0
+game_blue = 0
+game_green = 0
+
+~game_loop
+
+show = @array:get shows shows_idx
+@stack:push show
+
+call parse
+
+gl_red = @stack:pop
+gl_green = @stack:pop
+gl_blue = @stack:pop
+
+goto skip_red if gl_red <= game_red
+game_red = gl_red
+~skip_red
+
+goto skip_green if gl_green <= game_green
+game_green = gl_green
+~skip_green
+
+goto skip_blue if gl_blue <= game_blue
+game_blue = gl_blue
+~skip_blue
+
+shows_idx = shows_idx + 1
+goto game_loop if shows_idx < shows_len
+
+construct = game_red * game_green
+construct = construct * game_blue
+total = total + construct
+
+~game_done
+
+idx = idx + 1
+goto loop
+
+~done
+
+@io:println total

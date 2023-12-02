@@ -1,0 +1,102 @@
+goto prog_start
+
+~parse
+
+# only 12 red cubes, 13 green cubes, and 14 blue cubes?
+# "2 green"
+parse_value = @stack:pop
+parse_value_parts = @string:split parse_value " "
+parse_value_num = @array:get parse_value_parts 0
+parse_value_num = @convert:atoi parse_value_num
+parse_value_col = @array:get parse_value_parts 1
+
+goto check_red if parse_value_col == "red"
+goto check_blue if parse_value_col == "blue"
+goto check_green if parse_value_col == "green"
+
+~check_red
+goto check_ok if parse_value_num <= 12
+goto check_bad
+
+~check_blue
+goto check_ok if parse_value_num <= 14
+goto check_bad
+
+~check_green
+goto check_ok if parse_value_num <= 13
+goto check_bad
+
+~check_ok
+@stack:push true
+goto check_value_done
+
+~check_bad
+@stack:push false
+goto check_value_done
+
+~check_value_done
+
+ret
+
+~prog_start
+
+data = @file:read "days/02/input.txt"
+lines = @string:split data "\n"
+
+len = @array:len lines
+idx = 0
+
+ids = @array:new
+
+~loop
+goto done if idx >= len
+
+line = @array:get lines idx
+parts = @string:split line ":"
+
+game = @array:get parts 0
+game = @string:split game " "
+game = @array:get game 1
+game = @convert:atoi game
+
+cols = @array:get parts 1
+cols = @string:toarray cols
+@array:popat cols 0
+cols = @string:join cols ""
+
+shows = @string:split cols "; "
+shows_len = @array:len shows
+shows_idx = 0
+
+~game_loop
+
+show = @array:get shows shows_idx
+show_cols = @string:split show ", "
+show_cols_len = @array:len show_cols
+show_check_idx = 0
+
+~show_check_loop
+
+show_check = @array:get show_cols show_check_idx
+@stack:push show_check
+call parse
+ok = @stack:pop
+goto game_done if ok == false
+
+show_check_idx = show_check_idx + 1
+goto show_check_loop if show_check_idx < show_cols_len
+
+shows_idx = shows_idx + 1
+goto game_loop if shows_idx < shows_len
+
+@array:push ids game
+
+~game_done
+
+idx = idx + 1
+goto loop
+
+~done
+
+sum = @math:sum ids
+@io:println sum
