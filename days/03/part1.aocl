@@ -1,0 +1,192 @@
+goto prog_start
+
+~get_adjacent_chars_ok
+
+adj_x = @stack:pop
+adj_y = @stack:pop
+
+adjacent_chars = @array:new
+
+~get_adjacent_chars_tl
+goto get_adjacent_chars_tm if adj_x == 0
+goto get_adjacent_chars_tr if adj_y == 0
+adj_x1 = adj_x - 1
+adj_y1 = adj_y - 1
+adj_line = @array:get symbol_table adj_y1
+adj_char = @array:get adj_line adj_x1
+@array:push adjacent_chars adj_char
+
+~get_adjacent_chars_tm
+goto get_adjacent_chars_tr if adj_y == 0
+adj_y1 = adj_y - 1
+adj_line = @array:get symbol_table adj_y1
+adj_char = @array:get adj_line adj_x
+@array:push adjacent_chars adj_char
+
+~get_adjacent_chars_tr
+goto get_adjacent_chars_ml if adj_x == data_width
+goto get_adjacent_chars_ml if adj_y == 0
+adj_x1 = adj_x + 1
+adj_y1 = adj_y - 1
+adj_line = @array:get symbol_table adj_y1
+adj_char = @array:get adj_line adj_x1
+@array:push adjacent_chars adj_char
+
+~get_adjacent_chars_ml
+goto get_adjacent_chars_mr if adj_x == 0
+adj_x1 = adj_x - 1
+adj_line = @array:get symbol_table adj_y
+adj_char = @array:get adj_line adj_x1
+@array:push adjacent_chars adj_char
+~get_adjacent_chars_mr
+goto get_adjacent_chars_bl if adj_x == data_width
+adj_x1 = adj_x + 1
+adj_line = @array:get symbol_table adj_y
+adj_char = @array:get adj_line adj_x1
+@array:push adjacent_chars adj_char
+
+~get_adjacent_chars_bl
+goto get_adjacent_chars_done if adj_y == data_height
+goto get_adjacent_chars_bm if adj_x == 0
+adj_x1 = adj_x - 1
+adj_y1 = adj_y + 1
+adj_line = @array:get symbol_table adj_y1
+adj_char = @array:get adj_line adj_x1
+@array:push adjacent_chars adj_char
+
+~get_adjacent_chars_bm
+goto get_adjacent_chars_done if adj_y == data_height
+adj_y1 = adj_y + 1
+adj_line = @array:get symbol_table adj_y1
+adj_char = @array:get adj_line adj_x
+@array:push adjacent_chars adj_char
+
+~get_adjacent_chars_br
+goto get_adjacent_chars_done if adj_y == data_height
+goto get_adjacent_chars_done if adj_x == data_width
+adj_x1 = adj_x + 1
+adj_y1 = adj_y + 1
+adj_line = @array:get symbol_table adj_y1
+adj_char = @array:get adj_line adj_x1
+@array:push adjacent_chars adj_char
+
+~get_adjacent_chars_done
+
+adjacent_chars_len = @array:len adjacent_chars
+
+@iter:iterate "itr_adj_chars" 0 adjacent_chars_len
+
+adj_char = @array:get adjacent_chars itr_adj_chars
+has_num_or_dot = @string:contains "0123456789." adj_char
+goto itr_adj_char_ok if has_num_or_dot == false
+
+@iter:end "itr_adj_chars"
+
+goto itr_char_not_ok
+~itr_adj_char_ok
+@stack:push true
+ret
+
+~itr_char_not_ok
+@stack:push false
+ret
+
+~get_ok_numbers
+
+ok_nums = @array:new 0
+ok_line_index = @stack:pop
+ok_line = @array:get symbol_table ok_line_index
+
+ok_curr_num = @array:new
+ok_curr_valid = @array:new
+
+@iter:iterate "itr_ok_chars" 0 line_len
+
+ok_curr_char = @array:get ok_line itr_ok_chars
+is_num = @string:contains "0123456789" ok_curr_char
+goto itr_ok_chars_not_num if is_num == false
+
+@array:push ok_curr_num ok_curr_char
+@stack:push ok_line_index
+@stack:push itr_ok_chars
+call get_adjacent_chars_ok
+val = @stack:pop
+@array:push ok_curr_valid val
+goto itr_ok_chars_skip
+
+~itr_ok_chars_not_num
+num_len = @array:len ok_curr_num
+goto itr_ok_chars_skip if num_len == 0
+number = @string:join ok_curr_num ""
+number_ok = @std:any ok_curr_valid
+ok_curr_num = @array:new
+ok_curr_valid = @array:new
+goto itr_ok_chars_skip if number_ok == false
+
+parsed_num = @convert:atoi number
+@array:push ok_nums parsed_num
+
+~itr_ok_chars_skip
+
+@iter:end "itr_ok_chars"
+
+num_len = @array:len ok_curr_num
+goto itr_ok_done if num_len == 0
+number = @string:join ok_curr_num ""
+number_ok = @std:any ok_curr_valid
+ok_curr_num = @array:new
+ok_curr_valid = @array:new
+goto itr_ok_done if number_ok == false
+
+parsed_num = @convert:atoi number
+@array:push ok_nums parsed_num
+
+~itr_ok_done
+
+@stack:push ok_nums
+
+ret
+
+~prog_start
+
+data = @file:read "days/03/input.txt"
+lines = @string:split data "\n"
+
+len = @array:len lines
+data_height = len - 1
+
+symbol_table = @array:new
+
+@iter:iterate "itr_lines" 0 len
+
+curr_line = @array:get lines itr_lines
+line_data = @string:toarray curr_line
+
+@array:push symbol_table line_data
+
+line_len = @string:len curr_line
+data_width = line_len - 1
+
+@iter:end "itr_lines"
+
+valid_nums = @array:new
+
+@iter:iterate "itr_lines" 0 len
+
+@stack:push itr_lines
+call get_ok_numbers
+ok_numbers = @stack:pop
+
+ok_numbers_len = @array:len ok_numbers
+
+@iter:iterate "itr_ok_nums" 0 ok_numbers_len
+
+ok_num = @array:get ok_numbers itr_ok_nums
+@array:push valid_nums ok_num
+
+@iter:end "itr_ok_nums"
+
+@iter:end "itr_lines"
+
+total = @math:sum valid_nums
+@io:println total
